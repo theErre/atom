@@ -177,14 +177,25 @@ class check:
         self.cheq.grid(row=fila, column=columna, columnspan=columnas, sticky="we")
 
 class calendario:
+    """
+    Al parametro de columnas pasarle una columna menos del total
+    Este Objeto fue creado para mostrar un calendario para asi poder
+    mostrar una forma mas facil de elegir una fecha y poder de esta
+    forma tener un formato general para todos
+    """
+
     def __init__(self, lugar):
         self.lugar = lugar
         self.mostrar = {}
 
+        self.var_fecha = StringVar()
+
+        self.campo = Entry(self.lugar, textvariable=self.var_fecha, state="disabled")
         self.boton = Button(self.lugar, text="...", command=self.popup)
 
     def grid(self, fila, columna, columnas):
-        self.boton.grid(row=fila, column=columna, columnspan=columnas, sticky="we")
+        self.campo.grid(row=fila, column=columna, columnspan=columnas, sticky="we")
+        self.boton.grid(row=fila, column=(columna + 3), columnspan=1, sticky="we")
 
     def popup(self):
         self.boton.config(state="disabled")
@@ -241,7 +252,7 @@ class calendario:
         self.year = dt.year
         self.month = dt.month
         self.wid = []
-        self.day_selected = 1
+        self.day_selected = dt.day
         self.month_selected = self.month
         self.year_selected = self.year
         self.day_name = ""
@@ -260,17 +271,14 @@ class calendario:
         self.clear()
         self.setup(self.year, self.month)
 
-    def selection(self, day, name):
+    def selection(self, day):
         self.day_selected = day
         self.month_selected = self.month
         self.year_selected = self.year
-        self.day_name = name
 
-        self.values['day_selected'] = day
-        self.values['month_selected'] = self.month
-        self.values['year_selected'] = self.year
-        self.values['day_name'] = name
-        self.values['month_name'] = calendar.month_name[self.month_selected]
+        self.values["El dia"] = day
+        self.values["del Mes"] = self.month
+        self.values["del Anio"] = self.year
 
         self.clear()
         self.setup(self.year, self.month)
@@ -281,25 +289,27 @@ class calendario:
         for num, name in enumerate(days):
             t = Label(self.parent, text=name[:3])
             self.wid.append(t)
-            t.grid(row=0, column=num)
+            t.grid(row=0, column=num, pady=10)
 
         for w, week in enumerate(self.cal.monthdayscalendar(y, m), 2):
             for d, day in enumerate(week):
                 if(day):
-                    b = Button(self.parent, width=1, text=day, command=lambda day=day: self.selection(day, calendar.day_name[(day) % 7]))
+                    b = Button(self.parent, width=1, text=day, command=lambda day=day: self.selection(day))
                     self.wid.append(b)
                     b.grid(row=w, column=d, sticky="we")
 
-        sel = Label(self.parent, height=2, text='{} {} {} {}'.format(self.day_name, calendar.month_name[self.month_selected], self.day_selected, self.year_selected))
+        sel = Label(self.parent, height=2, text='{} {} {}'.format(self.day_selected, self.meses[self.month_selected - 1], self.year_selected))
         self.wid.append(sel)
         sel.grid(row=8, column=0, columnspan=7)
 
-        ok = Button(self.parent, width=5, text="ok", command=self.kill_and_save)
+        ok = Button(self.parent, width=5, text="Seleccionar", command=self.kill_and_save)
         self.wid.append(ok)
-        ok.grid(row=9, column=2, columnspan=3, pady=10)
+        ok.grid(row=9, column=0, columnspan=7, sticky="we")
 
     def kill_and_save(self):
-        print(self.mostrar)
+        self.var_fecha.set("")
+        texto = "{} / {} / {}".format(self.mostrar["El dia"], self.mostrar["del Mes"], self.mostrar["del Anio"])
+        self.var_fecha.set(texto)
         self.on_exit()
 
     def on_exit(self):
@@ -512,7 +522,7 @@ class todosLosPerfiles:
             alto = nuevaVentana.winfo_screenheight()
             var_ancho = (int(ancho / 2) - 300)
             var_alto = (int(alto / 2) - 350)
-            nuevaVentana.minsize(600, 700)
+            nuevaVentana.resizable(0, 0)
             nuevaVentana.geometry("600x700+{0}+{1}".format(var_ancho, var_alto))
             perfilTemp(nuevaVentana, values)
         except:
@@ -1156,7 +1166,6 @@ class otrosDatos:
         label(self.cont, text="Vencimiento de Documentos", anchor="w").grid(3, 1, 4)
         label(self.cont, text="Contrato", anchor="w").grid(4, 1, 2)
         entry(self.cont, textvariable=self.var_contrato).grid(4, 5, 3)
-        calendario(self.cont)
 
         label(self.cont, text="Carne de Salud", anchor="w").grid(5, 1, 3)
         entry(self.cont, textvariable=None).grid(5, 5, 3)
@@ -1318,9 +1327,9 @@ class perfilTemp:
         combobox(self.cont1, textvariable=None, listado=listadeDepartamentos, mostrar="Artigas").grid(1, 2, 4)
 
         label(self.cont1, text="el Dia").grid(1, 6, 2)
-        entry(self.cont1, textvariable=None, state="readonly").grid(1, 8, 3)
-
-        calendario(self.cont1).grid(1, 11, 1)
+        #entry(self.cont1, textvariable=None, state="readonly").grid(1, 8, 3)
+        calendario(self.cont1).grid(1, 8, 3)
+        
         label(self.cont1, text="Hijo de").grid(2, 0, 2)
 
         entry(self.cont1, textvariable=self.var_madre).grid(2, 2, 4)
@@ -1333,18 +1342,15 @@ class perfilTemp:
         label(self.cont1, text="de Nacionalidad").grid(3, 6, 3)
 
         entry(self.cont1, textvariable=None).grid(3, 9, 3)
-        label(self.cont1, text="ingreso a la Armada en Clase de").grid(4, 0, 5)
+        label(self.cont1, text="Ingreso a la Armada en Clase de").grid(4, 0, 5)
 
         combobox(self.cont1, textvariable=None, listado=["Marinero de Primera", "Otro"], mostrar="Marinero de Primera").grid(4, 5, 7)
 
         label(self.cont1, text="el Dia").grid(5, 0, 1)
+        calendario(self.cont1).grid(5, 1, 3)
 
-        entry(self.cont1, textvariable=None, state="readonly").grid(5, 1, 2)
-
-        calendario(self.cont1).grid(5, 3, 1)
-
-        label(self.cont1, text="Antiguedad").grid(5, 4, 3)
-        entry(self.cont1, textvariable=self.var_antiguedad).grid(5, 7, 5)
+        label(self.cont1, text="Antiguedad").grid(5, 6, 2)
+        entry(self.cont1, textvariable=self.var_antiguedad).grid(5, 8, 4)
 
         label(self.cont1, text="Credencial Civica Serie").grid(6, 0, 4)
         entry(self.cont1, textvariable=None).grid(6, 4, 4)
@@ -1356,17 +1362,16 @@ class perfilTemp:
         entry(self.cont1, textvariable=None).grid(7, 1, 3)
 
         label(self.cont1, text="Juro la Bandera").grid(7, 4, 3)
-        entry(self.cont1, textvariable=None).grid(7, 7, 4)
-        calendario(self.cont1).grid(7, 11, 1)
+        calendario(self.cont1).grid(7, 7, 3)
 
-        label(self.cont1, text="A quien llamar en caso de Accidente:", anchor="e").grid(9, 0, 4)
+        label(self.cont1, text="A quien llamar en caso de Accidente:", anchor="w").grid(9, 0, 6)
         label(self.cont1, text="Nombre").grid(10, 0, 2)
         entry(self.cont1, textvariable=None).grid(10, 2, 4)
 
         label(self.cont1, text="Contacto").grid(10, 6, 2)
         entry(self.cont1, textvariable=None).grid(10, 8, 4)
 
-        label(self.cont1, text="Relacion con el Tripulante").grid(11, 0, 4)
+        label(self.cont1, text="Relacion con el Tripulante").grid(11, 0, 5)
         entry(self.cont1, textvariable=None).grid(11, 4, 4)
 
         button(self.cont1, text="Guardar", command=self.mensaje).grid(13, 8, 4)
@@ -1446,7 +1451,7 @@ class perfilTemp:
             return False
 
     def mensaje(self, event=None):
-        messagebox.showinfo("Atom", "Estamos Trabajando para Usted \nPerdone las Molestias", parent=self.lugar)
+        messagebox.showinfo("Atom", "Estamos Trabajando para Usted Perdone las Molestias", parent=self.lugar)
 
     #funcion que se encarga poder cambiar la foto de perfil en caso de que no tenga una o actualizacion
     def recargar_foto(self):
@@ -1591,7 +1596,7 @@ class menuPrincipal:
         #Vamos a colocar una seccion donde nos aparezca los datos del admin mas sus privilegios
 
         #pestania que muestra el formulario para crar perfil temporal y perfiles temporales creados
-        f1 = Frame(notebook, bg="blue")
+        #f1 = Frame(notebook, bg="blue")
 
         f2 = Frame(notebook)
         nuevoRegistro(f2, self.matricula)
@@ -1599,13 +1604,13 @@ class menuPrincipal:
         f3 = Frame(notebook)
         todosLosPerfiles(f3, self.matricula)
 
-        f4 = Frame(notebook, bg="green")
+        #f4 = Frame(notebook, bg="green")
 
         #creamos las pestanias
-        notebook.add(f1, text='Notificaciones')
+        #notebook.add(f1, text='Notificaciones')
         notebook.add(f2, text='Nuevo Perfil')
         notebook.add(f3, text="Todos los Perfiles")
-        notebook.add(f4, text="Asignar Privilgios")
+        #notebook.add(f4, text="Asignar Privilgios")
         notebook.pack(pady=50)
 
 #Ventana principal
@@ -1620,10 +1625,10 @@ class App(Tk):
         self.geometry("950x700+{0}+{1}".format(var_ancho, var_alto))
         self.minsize(950, 700)
         #funcion que se encarga de preguntar antes de cerrar la ventana
-        #self.protocol("WM_DELETE_WINDOW", self.on_exit)
-        #inicioDeSesion(self)
+        self.protocol("WM_DELETE_WINDOW", self.on_exit)
+        inicioDeSesion(self)
         #nuevoRegistro(self, 190029)
-        perfilTemp(self, 190029)
+        #perfilTemp(self, 190029)
 
     def on_exit(self):
         if messagebox.askyesno("Atom", "Salir?"):
